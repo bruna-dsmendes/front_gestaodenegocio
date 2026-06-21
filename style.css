@@ -1,3 +1,8 @@
+/* ============================================================
+   STYLE.CSS — Intelicob v2.0 | Console de Atendimento
+   Tema: Dark Financeiro | Mobile-first
+   ============================================================ */
+
 :root {
   --bg:            #0a0e1a;
   --surface:       rgba(20, 27, 45, 0.85);
@@ -30,6 +35,9 @@ body {
 
 .hidden { display: none !important; }
 
+/* ===========================
+   HEADER
+=========================== */
 .app-header {
   position: sticky;
   top: 0;
@@ -81,6 +89,9 @@ body {
   background: rgba(0, 212, 255, 0.12);
 }
 
+/* ===========================
+   MAIN
+=========================== */
 .app-main {
   max-width: 1200px;
   margin: 0 auto;
@@ -105,6 +116,9 @@ body {
   flex-wrap: wrap;
 }
 
+/* ===========================
+   STATUS BANNER
+=========================== */
 .status-banner {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -119,6 +133,9 @@ body {
 .status-banner.success { border-color: var(--success); color: var(--success); }
 .status-banner.info    { border-color: var(--accent);  color: var(--accent); }
 
+/* ===========================
+   BARRA DE BUSCA CONSOLE
+=========================== */
 .search-console {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -154,6 +171,7 @@ body {
   margin-top: 10px;
 }
 
+/* ── Empty attendance ── */
 .empty-attendance {
   text-align: center;
   padding: 60px 20px;
@@ -175,6 +193,9 @@ body {
   opacity: .7;
 }
 
+/* ===========================
+   CARD DO CLIENTE
+=========================== */
 .cliente-card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -224,6 +245,9 @@ body {
 .meta-sep { opacity: .4; }
 .cliente-status-wrap { flex-shrink: 0; }
 
+/* ===========================
+   ABAS INTERNAS
+=========================== */
 .inner-tabs {
   display: flex;
   gap: 2px;
@@ -263,7 +287,9 @@ body {
   margin-bottom: 14px;
 }
 
-/* GRID DE MÉTRICAS */
+/* ===========================
+   RESUMO — GRID DE MÉTRICAS
+=========================== */
 .resumo-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -296,6 +322,9 @@ body {
   font-weight: 900;
 }
 
+/* ===========================
+   DASHBOARD MÉTRICAS
+=========================== */
 .metrics-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -362,6 +391,9 @@ body {
   transition: width 1.4s cubic-bezier(.34,1.56,.64,1);
 }
 
+/* ===========================
+   SECTION CARD
+=========================== */
 .section-card {
   background: rgba(255,255,255,.02);
   border: 1px solid var(--border);
@@ -378,6 +410,9 @@ body {
   margin-bottom: 14px;
 }
 
+/* ===========================
+   LISTA DE COBRANÇAS (no card do cliente)
+=========================== */
 .cobranca-list { display: flex; flex-direction: column; gap: 10px; }
 .cobranca-item {
   background: rgba(255,255,255,.03);
@@ -427,6 +462,9 @@ body {
   cursor: pointer;
 }
 
+/* ===========================
+   LISTA DE OCORRÊNCIAS
+=========================== */
 .oc-list { display: flex; flex-direction: column; gap: 10px; }
 .oc-item {
   background: rgba(255,255,255,.03);
@@ -473,6 +511,9 @@ body {
   color: var(--text-muted);
 }
 
+/* ===========================
+   FORMULÁRIO DE EDIÇÃO (inline)
+=========================== */
 .form-group { margin-bottom: 16px; }
 .form-group label {
   display: block;
@@ -511,6 +552,9 @@ body {
   gap: 12px;
 }
 
+/* ===========================
+   TABELAS (view cadastros)
+=========================== */
 .table-card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -580,6 +624,9 @@ body {
 .action-btn:hover { background: rgba(255,255,255,.12); border-color: var(--accent); }
 .action-btn.danger:hover { border-color: var(--danger); color: var(--danger); }
 
+/* ===========================
+   SEARCH / FILTER BAR
+=========================== */
 .search-bar, .filter-bar {
   display: flex;
   gap: 8px;
@@ -604,6 +651,9 @@ body {
 .filter-bar input:focus,
 .filter-bar select:focus { border-color: var(--accent); }
 
+/* ===========================
+   BOTÕES
+=========================== */
 .btn-primary, .btn-secondary, .btn-ghost, .btn-danger {
   display: inline-flex;
   align-items: center;
@@ -644,6 +694,9 @@ body {
 .btn-danger:hover { background: rgba(255,82,82,.25); }
 .btn-sm { padding: 8px 14px; font-size: .76rem; }
 
+/* ===========================
+   MODAL
+=========================== */
 .modal-overlay {
   position: fixed;
   top: 0; left: 0;
@@ -694,6 +747,9 @@ body {
   padding: 0 20px 20px;
 }
 
+/* ===========================
+   TOAST
+=========================== */
 .toast-container {
   position: fixed;
   bottom: 20px;
@@ -724,6 +780,9 @@ body {
 .toast.info    { border-color: var(--accent);  color: var(--accent); }
 @keyframes toastIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
 
+/* ===========================
+   SPINNER
+=========================== */
 .spinner {
   display: inline-block;
   width: 18px; height: 18px;
@@ -735,7 +794,9 @@ body {
 @keyframes spin { to { transform: rotate(360deg); } }
 
 
-/* MÚLTIPLOS RESULTADOS (busca) */
+/* ===========================
+   MÚLTIPLOS RESULTADOS (busca)
+=========================== */
 .multi-result-list {
   display: flex;
   flex-direction: column;
@@ -786,7 +847,9 @@ body {
 }
 
 
-/* RESUMO — DADOS PESSOAIS*/
+/* ===========================
+   RESUMO — DADOS PESSOAIS
+=========================== */
 .dados-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -812,6 +875,9 @@ body {
   font-weight: 600;
 }
 
+/* ===========================
+   COBRANÇA ITEM — DETALHES
+=========================== */
 .cobranca-item-info {
   display: flex;
   flex-direction: column;
@@ -855,7 +921,9 @@ body {
   margin-top: 4px;
 }
 
-/* OCORRÊNCIA — EXTRAS */
+/* ===========================
+   OCORRÊNCIA — EXTRAS
+=========================== */
 .oc-atendente {
   font-size: .72rem;
   color: var(--accent);
@@ -873,13 +941,17 @@ body {
   width: fit-content;
 }
 
-/* MODAL — SCROLL PARA FORMS LONGOS */
+/* ===========================
+   MODAL — SCROLL PARA FORMS LONGOS
+=========================== */
 .modal-body {
   max-height: 60vh;
   overflow-y: auto;
 }
 
-/* BREAKPOINTS */
+/* ===========================
+   BREAKPOINTS
+=========================== */
 @media (min-width: 768px) {
   .header-inner {
     flex-direction: row;
@@ -911,4 +983,180 @@ body {
   .form-row     { grid-template-columns: 1fr; }
   .cliente-header { flex-direction: column; text-align: center; align-items: center; }
   .cliente-meta { justify-content: center; }
+}
+
+/* ============================================================
+   LOGIN SCREEN + USER INFO — v3.1
+   ============================================================ */
+
+.login-screen {
+  position: fixed; inset: 0; z-index: 9999;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #0a0e1a 0%, #111827 50%, #0a0e1a 100%);
+  padding: clamp(1rem, 4vw, 2rem);
+}
+.login-screen.hidden { display: none; }
+
+.login-card {
+  width: 100%; max-width: 420px;
+  background: rgba(20,27,45,0.95);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: clamp(1rem, 3vw, 1.5rem);
+  padding: clamp(1.5rem, 5vw, 2.5rem);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+.login-logo {
+  font-size: clamp(1.5rem, 5vw, 2rem);
+  font-weight: 900; text-align: center;
+  background: linear-gradient(135deg, #00d4ff, #7c4dff);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.login-subtitle {
+  text-align: center; color: rgba(232,234,246,0.55);
+  font-size: clamp(.8rem, 2.5vw, .9rem); margin-bottom: 2rem;
+}
+
+.login-form .form-group { margin-bottom: 1.2rem; }
+.login-form label {
+  display: block; font-size: .85rem; font-weight: 600;
+  color: rgba(232,234,246,0.7); margin-bottom: .4rem;
+}
+.login-form input {
+  width: 100%; padding: .8rem 1rem;
+  background: rgba(10,14,26,0.6);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: .6rem; color: #e8eaf6;
+  font-size: 1rem; font-family: inherit;
+  transition: border .2s;
+}
+.login-form input:focus {
+  outline: none; border-color: #00d4ff;
+  box-shadow: 0 0 0 3px rgba(0,212,255,0.15);
+}
+
+.btn-login {
+  width: 100%; margin-top: .5rem; padding: .9rem;
+  font-size: 1.05rem; font-weight: 700;
+}
+
+.login-demo-info {
+  margin-top: 1.8rem; padding: 1rem;
+  background: rgba(0,212,255,0.06);
+  border: 1px solid rgba(0,212,255,0.12);
+  border-radius: .6rem;
+  font-size: .8rem; line-height: 1.6;
+  color: rgba(232,234,246,0.6);
+}
+.login-demo-info strong { color: #00d4ff; }
+.login-demo-info code {
+  background: rgba(255,255,255,0.08);
+  padding: .1rem .4rem; border-radius: .3rem;
+  font-size: .78rem; color: #7c4dff;
+}
+
+/* ─── User Info no Header ─── */
+.user-info-wrap {
+  display: flex; align-items: center; gap: .6rem;
+  margin-left: auto;
+}
+.user-info-pill {
+  font-size: .78rem; font-weight: 600;
+  color: rgba(232,234,246,0.7);
+  white-space: nowrap;
+}
+.btn-logout {
+  background: rgba(255,82,82,0.12);
+  border: 1px solid rgba(255,82,82,0.25);
+  color: #ff5252;
+  padding: .35rem .8rem; border-radius: .4rem;
+  font-size: .78rem; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+}
+.btn-logout:hover {
+  background: rgba(255,82,82,0.2);
+  border-color: rgba(255,82,82,0.4);
+}
+
+@media (max-width: 640px) {
+  .user-info-wrap { flex-direction: column; gap: .2rem; align-items: flex-end; }
+  .user-info-pill { font-size: .7rem; }
+  .btn-logout { font-size: .7rem; padding: .25rem .6rem; }
+}
+
+/* ============================================================
+   PARCELAMENTO — Intelicob v3.3
+   ============================================================ */
+
+.cobranca-parc-tag {
+  background: rgba(124,77,255,0.12);
+  border: 1px solid rgba(124,77,255,0.25);
+  border-radius: .4rem;
+  padding: .35rem .7rem;
+  font-size: .78rem;
+  color: #b39ddb;
+  margin: .4rem 0;
+  display: inline-block;
+}
+
+.action-btn-parc {
+  background: rgba(124,77,255,0.15) !important;
+  border: 1px solid rgba(124,77,255,0.3) !important;
+  color: #b39ddb !important;
+}
+.action-btn-parc:hover {
+  background: rgba(124,77,255,0.25) !important;
+  border-color: rgba(124,77,255,0.5) !important;
+}
+
+.parc-resumo {
+  display: flex; flex-wrap: wrap; gap: .6rem;
+  background: rgba(0,212,255,0.05);
+  border: 1px solid rgba(0,212,255,0.12);
+  border-radius: .6rem; padding: .8rem 1rem;
+  margin-bottom: 1.2rem;
+}
+.parc-resumo-item { display: flex; flex-direction: column; gap: .15rem; min-width: 120px; }
+.parc-label { font-size: .72rem; color: rgba(232,234,246,0.5); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+.parc-value { font-size: .9rem; color: #e8eaf6; font-weight: 600; }
+.parc-value-destaque { color: #00d4ff; font-size: 1.05rem; }
+
+.form-section-title {
+  font-size: .82rem; font-weight: 700; color: #00d4ff;
+  text-transform: uppercase; letter-spacing: .06em;
+  margin: 1.2rem 0 .6rem; padding-bottom: .4rem;
+  border-bottom: 1px solid rgba(0,212,255,0.15);
+}
+.form-section-hint {
+  font-size: .8rem; color: rgba(232,234,246,0.5);
+  margin-bottom: .8rem; line-height: 1.4;
+}
+
+.dados-bancarios-section {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: .6rem; padding: 1rem;
+  margin-bottom: .8rem;
+}
+.dados-bancarios-section.hidden { display: none; }
+
+/* ── Desconto/Juros — Intelicob v3.3 ── */
+.parc-value-verde { color: #69f0ae !important; }
+
+.input-suffix-wrap {
+  position: relative; display: flex; align-items: center;
+}
+.input-suffix-wrap input {
+  padding-right: 3.5rem !important; width: 100%;
+}
+.input-suffix {
+  position: absolute; right: .75rem;
+  font-size: .78rem; color: rgba(232,234,246,0.45);
+  pointer-events: none; white-space: nowrap;
+}
+
+.form-hint {
+  font-size: .75rem; color: rgba(232,234,246,0.38);
+  margin-top: .25rem; display: block;
 }

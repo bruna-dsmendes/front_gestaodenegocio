@@ -1,26 +1,54 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#0a0e1a">
-  <title>InteliCob — Console de Atendimento</title>
+  <title>Intelicob — Console de Atendimento</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
+
+  <!-- ════ TELA DE LOGIN ════ -->
+  <div class="login-screen hidden" id="login-screen">
+    <div class="login-card">
+      <div class="login-logo">🧠 Intelicob</div>
+      <p class="login-subtitle">Sistema de Gestão de Débitos</p>
+
+      <div class="login-form">
+        <div class="form-group">
+          <label>E-mail</label>
+          <input type="email" id="login-email" placeholder="seu@email.com" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label>Senha</label>
+          <input type="password" id="login-senha" placeholder="••••••" autocomplete="off">
+        </div>
+        <button class="btn-primary btn-login" id="btn-login">Entrar</button>
+      </div>
+
+      <div class="login-demo-info">
+        <p><strong>Contas de teste:</strong></p>
+        <p>👔 Gerente: <code>gerente@intelicob.com</code> / <code>123456</code></p>
+        <p>🎧 Analista: <code>analista@intelicob.com</code> / <code>123456</code></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ APP ROOT ════ -->
+  <div id="app-root" class="hidden">
 
   <header class="app-header">
     <div class="header-inner">
-      <h1 class="logo">📊 InteliCob</h1>
+      <h1 class="logo">🧠 Intelicob</h1>
       <nav class="nav-tabs" id="nav-tabs">
         <button class="nav-tab active" data-view="atendimento">📞 Atendimento</button>
         <button class="nav-tab" data-view="dashboard">📊 Dashboard</button>
         <button class="nav-tab" data-view="cadastros">🗂️ Cadastros</button>
       </nav>
+      <div class="user-info-wrap" id="user-info-wrap"></div>
     </div>
   </header>
 
@@ -32,8 +60,7 @@
 
       <div class="search-console">
         <div class="search-console-inner">
-          <input type="text" id="search-cpf" placeholder="🔍 Digite o CPF/CNPJ ou nome do cliente..." autocomplete="off"
-            class="search-cpf-input">
+          <input type="text" id="search-cpf" placeholder="🔍 Digite o CPF/CNPJ ou nome do cliente..." autocomplete="off" class="search-cpf-input">
           <button class="btn-primary" id="btn-buscar-cliente">🔎 Buscar</button>
         </div>
         <p class="search-hint">Digite o CPF (ex: 123.456.789-00) ou parte do nome para localizar o cliente</p>
@@ -95,7 +122,6 @@
               </div>
             </div>
 
-            <!-- Dados pessoais + endereço -->
             <div class="section-card">
               <p class="section-title">👤 Dados Pessoais & Endereço</p>
               <div id="resumo-dados-pessoais"></div>
@@ -132,8 +158,7 @@
                 </div>
               </div>
 
-              <textarea id="oc-descricao" rows="3"
-                placeholder="Descreva a interação com o cliente (mín. 10 caracteres)..." maxlength="500"></textarea>
+              <textarea id="oc-descricao" rows="3" placeholder="Descreva a interação com o cliente (mín. 10 caracteres)..." maxlength="500"></textarea>
 
               <div class="form-row">
                 <div class="form-group">
@@ -229,8 +254,7 @@
       </div>
 
       <div class="search-bar">
-        <input type="text" id="search-cliente-lista" placeholder="Buscar por nome, CPF, e-mail ou telefone..."
-          autocomplete="off">
+        <input type="text" id="search-cliente-lista" placeholder="Buscar por nome, CPF, e-mail ou telefone..." autocomplete="off">
       </div>
 
       <div class="table-card">
@@ -246,6 +270,8 @@
     </section>
 
   </main>
+
+  </div><!-- /app-root -->
 
   <!-- MODAL -->
   <div class="modal-overlay hidden" id="modal-overlay">
@@ -264,5 +290,4 @@
   <script src="config.js"></script>
   <script src="script.js"></script>
 </body>
-
 </html>
