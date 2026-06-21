@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0e1a">
+  <title>CrediControl — Console de Atendimento</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="app-header">
+    <div class="header-inner">
+      <h1 class="logo">📊 CrediControl</h1>
+      <nav class="nav-tabs" id="nav-tabs">
+        <button class="nav-tab active" data-view="atendimento">📞 Atendimento</button>
+        <button class="nav-tab" data-view="dashboard">📊 Dashboard</button>
+        <button class="nav-tab" data-view="cadastros">🗂️ Cadastros</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="app-main">
+    <div class="status-banner hidden" id="status-banner"></div>
+
+    <!-- ════ ATENDIMENTO ════ -->
+    <section class="view active" id="view-atendimento">
+
+      <div class="search-console">
+        <div class="search-console-inner">
+          <input type="text" id="search-cpf" placeholder="🔍 Digite o CPF/CNPJ ou nome do cliente..." autocomplete="off" class="search-cpf-input">
+          <button class="btn-primary" id="btn-buscar-cliente">🔎 Buscar</button>
+        </div>
+        <p class="search-hint">Digite o CPF (ex: 123.456.789-00) ou parte do nome para localizar o cliente</p>
+      </div>
+
+      <div class="empty-attendance" id="empty-attendance">
+        <div class="empty-attendance-icon">👤</div>
+        <p class="empty-attendance-title">Nenhum cliente selecionado</p>
+        <p class="empty-attendance-sub">Pesquise pelo CPF/CNPJ ou nome acima para iniciar o atendimento</p>
+      </div>
+
+      <div class="cliente-card hidden" id="cliente-card">
+        <div class="cliente-header">
+          <div class="cliente-avatar" id="cliente-avatar">👤</div>
+          <div class="cliente-info">
+            <h2 class="cliente-nome" id="cliente-nome">—</h2>
+            <div class="cliente-meta">
+              <span id="cliente-cpf">—</span>
+              <span class="meta-sep">•</span>
+              <span id="cliente-email">—</span>
+              <span class="meta-sep">•</span>
+              <span id="cliente-telefone">—</span>
+            </div>
+          </div>
+          <div class="cliente-status-wrap" id="cliente-status-wrap"></div>
+        </div>
+
+        <div class="inner-tabs" id="inner-tabs">
+          <button class="inner-tab active" data-inner="resumo">📋 Resumo</button>
+          <button class="inner-tab" data-inner="cobrancas">💸 Cobranças</button>
+          <button class="inner-tab" data-inner="ocorrencias">📞 Ocorrências</button>
+          <button class="inner-tab" data-inner="editar">✏️ Editar</button>
+        </div>
+
+        <div class="inner-content">
+
+          <!-- ABA: RESUMO -->
+          <div class="inner-view active" id="inner-resumo">
+            <div class="resumo-grid">
+              <div class="resumo-card resumo-danger">
+                <span class="resumo-icon">📉</span>
+                <span class="resumo-label">Total em Débito</span>
+                <span class="resumo-value" id="resumo-total-debito">—</span>
+              </div>
+              <div class="resumo-card resumo-success">
+                <span class="resumo-icon">💰</span>
+                <span class="resumo-label">Total Pago</span>
+                <span class="resumo-value" id="resumo-total-pago">—</span>
+              </div>
+              <div class="resumo-card resumo-accent">
+                <span class="resumo-icon">📋</span>
+                <span class="resumo-label">Cobranças Ativas</span>
+                <span class="resumo-value" id="resumo-cobrancas-ativas">—</span>
+              </div>
+              <div class="resumo-card resumo-warning">
+                <span class="resumo-icon">📞</span>
+                <span class="resumo-label">Ocorrências</span>
+                <span class="resumo-value" id="resumo-total-ocorrencias">—</span>
+              </div>
+            </div>
+
+            <!-- Dados pessoais + endereço -->
+            <div class="section-card">
+              <p class="section-title">👤 Dados Pessoais & Endereço</p>
+              <div id="resumo-dados-pessoais"></div>
+            </div>
+
+            <div class="section-card">
+              <p class="section-title">📋 Ocorrências Recentes</p>
+              <div id="resumo-ocorrencias" class="oc-list"></div>
+            </div>
+          </div>
+
+          <!-- ABA: COBRANÇAS -->
+          <div class="inner-view" id="inner-cobrancas">
+            <div class="inner-view-header">
+              <p class="section-title">💸 Cobranças do Cliente</p>
+              <button class="btn-primary btn-sm" id="btn-nova-cobranca">➕ Nova Cobrança</button>
+            </div>
+            <div id="cliente-cobrancas-list" class="cobranca-list"></div>
+          </div>
+
+          <!-- ABA: OCORRÊNCIAS -->
+          <div class="inner-view" id="inner-ocorrencias">
+            <div class="section-card oc-form-card">
+              <p class="section-title">📝 Registrar Nova Ocorrência</p>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Tipo de Contato *</label>
+                  <select id="oc-tipo"></select>
+                </div>
+                <div class="form-group">
+                  <label>Resultado</label>
+                  <select id="oc-resultado"></select>
+                </div>
+              </div>
+
+              <textarea id="oc-descricao" rows="3" placeholder="Descreva a interação com o cliente (mín. 10 caracteres)..." maxlength="500"></textarea>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Promessa de Pagamento?</label>
+                  <select id="oc-compromisso">
+                    <option value="false">Não</option>
+                    <option value="true">Sim</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Data do Compromisso</label>
+                  <input type="date" id="oc-data-compromisso" disabled>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Valor do Acordo (R$)</label>
+                <input type="number" id="oc-valor-acordo" step="0.01" min="0" placeholder="0,00" disabled>
+              </div>
+
+              <div class="oc-form-footer">
+                <span class="char-counter"><span id="oc-char-count">0</span> / 500</span>
+                <button class="btn-primary btn-sm" id="btn-registrar-ocorrencia" disabled>📤 Registrar</button>
+              </div>
+            </div>
+
+            <div class="section-card">
+              <p class="section-title">📋 Histórico de Atendimento</p>
+              <div id="cliente-ocorrencias-list" class="oc-list"></div>
+            </div>
+          </div>
+
+          <!-- ABA: EDITAR -->
+          <div class="inner-view" id="inner-editar">
+            <div class="section-card">
+              <p class="section-title">✏️ Editar Dados do Cliente</p>
+              <div id="edit-form-container"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ════ DASHBOARD ════ -->
+    <section class="view" id="view-dashboard">
+      <h2 class="view-title">Dashboard Financeiro</h2>
+
+      <div class="metrics-grid">
+        <div class="metric-card metric-danger">
+          <span class="metric-icon">📉</span>
+          <span class="metric-label">Total em Aberto</span>
+          <span class="metric-value" id="dash-total-aberto">—</span>
+        </div>
+        <div class="metric-card metric-success">
+          <span class="metric-icon">📈</span>
+          <span class="metric-label">Total Recuperado</span>
+          <span class="metric-value" id="dash-total-recuperado">—</span>
+        </div>
+        <div class="metric-card metric-accent">
+          <span class="metric-icon">📋</span>
+          <span class="metric-label">Cobranças Ativas</span>
+          <span class="metric-value" id="dash-quantidade">—</span>
+        </div>
+        <div class="metric-card metric-warning">
+          <span class="metric-icon">🎯</span>
+          <span class="metric-label">Taxa de Sucesso</span>
+          <span class="metric-value" id="dash-taxa">—</span>
+        </div>
+      </div>
+
+      <div class="recovery-bar-card">
+        <div class="recovery-bar-header">
+          <span>Taxa de Recuperação de Crédito</span>
+          <span id="recovery-pct">0%</span>
+        </div>
+        <div class="recovery-bar-track">
+          <div class="recovery-bar-fill" id="recovery-fill"></div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <p class="section-title">📞 Últimas Ocorrências do Sistema</p>
+        <div id="dash-ocorrencias-recentes" class="oc-list"></div>
+      </div>
+    </section>
+
+    <!-- ════ CADASTROS ════ -->
+    <section class="view" id="view-cadastros">
+      <div class="view-header-row">
+        <h2 class="view-title">Cadastro de Clientes</h2>
+        <button class="btn-primary" id="btn-novo-cliente">➕ Novo Cliente</button>
+      </div>
+
+      <div class="search-bar">
+        <input type="text" id="search-cliente-lista" placeholder="Buscar por nome, CPF, e-mail ou telefone..." autocomplete="off">
+      </div>
+
+      <div class="table-card">
+        <div class="table-head">
+          <span>Nome</span>
+          <span>CPF/CNPJ</span>
+          <span>E-mail</span>
+          <span>Status</span>
+          <span>Ações</span>
+        </div>
+        <div id="clientes-list" class="table-body"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL -->
+  <div class="modal-overlay hidden" id="modal-overlay">
+    <div class="modal" id="modal-container">
+      <div class="modal-header">
+        <h3 id="modal-title">Título</h3>
+        <button class="modal-close" id="modal-close">✕</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+      <div class="modal-footer" id="modal-footer"></div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="config.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
