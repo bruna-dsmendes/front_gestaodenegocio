@@ -139,7 +139,7 @@ async function fazerLogin() {
 // ============================================================
 const API = (() => {
   const BASE = CONFIG.API_BASE_URL;
-  async function request(path, { method = 'GET', body } = {}) {
+  async function request(path, { method = 'GET', body, raw = false } = {}) {
     const opts = { method, headers: { 'Content-Type': 'application/json' } };
     if (body) opts.body = JSON.stringify(body);
     const res = await fetch(`${BASE}${path}`, opts);
@@ -155,11 +155,19 @@ const API = (() => {
       } catch {}
       throw new Error(msg);
     }
-    if (res.status === 204 || res.status === 200) {
-      // Tenta parse JSON mas não falha se vazio
-      return res.text().then(t => { try { return JSON.parse(t); } catch { return null; } });
+    // raw=true: retorna o blob para download (boleto, PDF, etc.)
+    if (raw) {
+      const blob = await res.blob();
+      const filename = res.headers.get('Content-Disposition')?.split('filename=')[1]?.replace(/"/g,'') || 'download.txt';
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+      return null;
     }
-    return res.json();
+    if (res.status === 204) return null;
+    return res.text().then(t => { try { return JSON.parse(t); } catch { return null; } });
   }
   return {
     listarClientes:      () => request(CONFIG.ENDPOINTS.CLIENTES),
@@ -173,9 +181,13 @@ const API = (() => {
     criarCobranca:       (d) => request(CONFIG.ENDPOINTS.COBRANCAS, { method:'POST', body:d }),
     atualizarCobranca:   (id,d) => request(CONFIG.ENDPOINTS.COBRANCA_BY_ID(id), { method:'PUT', body:d }),
     cobrancasPorCliente: (id) => request(CONFIG.ENDPOINTS.COBRANCA_POR_CLIENTE(id)),
+    gerarBoleto:         (id) => request(CONFIG.ENDPOINTS.BOLETO_POR_COBRANCA(id), { method:'GET', raw:true }),
+    gerarBoletoConsolidado: (cod) => request(CONFIG.ENDPOINTS.BOLETO_CONSOLIDADO(cod), { method:'GET', raw:true }),
+    registrarAcordo:     (id, dados) => request(CONFIG.ENDPOINTS.REGISTRAR_ACORDO(id), { method:'POST', body:dados }),
     dashboard:           () => request(CONFIG.ENDPOINTS.DASHBOARD),
     criarOcorrencia:     (cid,d) => request(CONFIG.ENDPOINTS.OCORRENCIA_CRIAR(cid), { method:'POST', body:d }),
-    listarOcorrencias:   (cid) => request(CONFIG.ENDPOINTS.OCORRENCIA_LISTAR(cid)),
+    listarOcorrencias:     (cid) => request(CONFIG.ENDPOINTS.OCORRENCIA_LISTAR(cid)),
+    ocorrenciasPorCliente: (cid) => request(CONFIG.ENDPOINTS.OCORRENCIA_LISTAR(cid)),
     ocorrenciasRecentes: () => request(CONFIG.ENDPOINTS.OCORRENCIAS_RECENTES),
   };
 })();
@@ -393,6 +405,9 @@ async function abrirClienteNoConsole(id) {
     renderResumo(currentCobrancas, currentOcorrencias, cliente);
     renderCobrancasCliente(currentCobrancas);
     renderOcorrenciasCliente(currentOcorrencias);
+    renderNegociacao(currentCobrancas);
+    renderAcordos(currentCobrancas);
+    initNegociacaoButtons();
     renderEditForm(cliente);
 
     fillSelect('oc-tipo', CONFIG.TIPO_OCORRENCIA, 'Selecione o tipo...');
@@ -851,17 +866,699 @@ async function saveParcelamento(cobrancaId, valorTotal) {
     delete merged.cliente?.ocorrencias;
 
     await API.atualizarCobranca(cobrancaId, merged);
-    toast(`✅ Parcelamento em ${qtd}x confirmado! Código: ${codigo}`, 'success', 5000);
+    // Ocorrência automática de acordo
+    await registrarOcorrenciaAcordo([cobrancaId], { atendente: localStorage.getItem('intelicob_user') || 'Operador' });
+    toast(`✅ Parcelamento em ${qtd}x confirmado! Ocorrência registrada.`, 'success', 4000);
     closeModal();
 
     currentCobrancas = await API.cobrancasPorCliente(currentCliente.id);
+    currentOcorrencias = await API.ocorrenciasPorCliente(currentCliente.id);
     renderCobrancasCliente(currentCobrancas);
+    renderNegociacao(currentCobrancas);
+    renderAcordos(currentCobrancas);
     renderResumo(currentCobrancas, currentOcorrencias, currentCliente);
   } catch (err) {
     toast(`❌ ${err.message}`, 'error');
   }
 }
 
+
+
+// ============================================================
+//  NEGOCIAÇÃO CONSOLIDADA — Aba "🤝 Negociação"
+// ============================================================
+let negSelecionados = new Set(); // IDs das cobranças selecionadas
+
+function renderNegociacao(cobrancas) {
+  const lista = document.getElementById('neg-lista');
+  const subtitle = document.getElementById('neg-subtitle');
+  if (!lista) return;
+
+  // Filtra só as cobranças em aberto (não pagas, não canceladas)
+  const abertas = (cobrancas || []).filter(c =>
+    !['PAGO', 'CANCELADO'].includes(c.status)
+  );
+
+  if (!abertas.length) {
+    lista.innerHTML = '<p class="empty-state">✅ Nenhum débito em aberto para negociar.</p>';
+    if (subtitle) subtitle.textContent = 'Nenhum débito pendente encontrado.';
+    return;
+  }
+  if (subtitle) subtitle.textContent = `${abertas.length} débito(s) em aberto — selecione para negociar`;
+
+  negSelecionados.clear();
+  lista.innerHTML = '';
+
+  abertas.forEach(c => {
+    const sInfo = statusCobrancaInfo(c.status);
+    const parc  = c.parcelado && c.numeroParcelas
+      ? `<span class="neg-badge-parc">🗓️ ${c.numeroParcelas}x</span>` : '';
+    const desc  = c.descontoPercentual ? `<span class="neg-badge-desc">-${c.descontoPercentual}%</span>` : '';
+
+    const card = document.createElement('div');
+    card.className = 'neg-card';
+    card.dataset.id = c.id;
+
+    // Checkbox
+    const chk = document.createElement('input');
+    chk.type = 'checkbox';
+    chk.className = 'neg-chk';
+    chk.id = `neg-chk-${c.id}`;
+    chk.addEventListener('change', () => {
+      if (chk.checked) negSelecionados.add(c.id);
+      else negSelecionados.delete(c.id);
+      card.classList.toggle('neg-card-selected', chk.checked);
+      atualizarResumoNeg(cobrancas);
+    });
+
+    const body = document.createElement('div');
+    body.className = 'neg-card-body';
+
+    // Título
+    const titulo = document.createElement('div');
+    titulo.className = 'neg-card-titulo';
+    const tLabel = document.createElement('label');
+    tLabel.htmlFor = `neg-chk-${c.id}`;
+    tLabel.className = 'neg-card-desc';
+    tLabel.textContent = c.descricao;
+    titulo.appendChild(tLabel);
+    if (parc || desc) {
+      const badges = document.createElement('span');
+      badges.className = 'neg-badges';
+      badges.innerHTML = parc + desc; // badges são estáticos (sem dados do usuário)
+      titulo.appendChild(badges);
+    }
+
+    // Detalhes
+    const details = document.createElement('div');
+    details.className = 'neg-card-details';
+
+    const detItems = [
+      { icon: '💰', text: formatCurrency(c.valorFinal || c.valor) },
+      { icon: '🏢', text: c.empresaCredora || null },
+      { icon: '📅', text: `Venc: ${formatDate(c.dataVencimento)}` },
+      { icon: '🏷️', text: statusLabel(c.status) },
+    ].filter(d => d.text);
+
+    detItems.forEach(d => {
+      const sp = document.createElement('span');
+      const icon = document.createTextNode(d.icon + ' ');
+      const txt  = document.createTextNode(d.text);
+      sp.appendChild(icon);
+      sp.appendChild(txt);
+      details.appendChild(sp);
+    });
+
+    // Observações
+    let obsEl = null;
+    if (c.observacoes) {
+      obsEl = document.createElement('div');
+      obsEl.className = 'neg-card-obs';
+      const obsIcon = document.createTextNode('📝 ');
+      const obsTxt  = document.createTextNode(c.observacoes);
+      obsEl.appendChild(obsIcon);
+      obsEl.appendChild(obsTxt);
+    }
+
+    // Botão individual
+    const actions = document.createElement('div');
+    actions.className = 'neg-card-actions';
+    const btnInd = document.createElement('button');
+    btnInd.className = 'action-btn action-btn-parc';
+    btnInd.textContent = '🗓️ Negociar este';
+    btnInd.addEventListener('click', () => showParcelamentoForm(c.id));
+    actions.appendChild(btnInd);
+
+    body.appendChild(titulo);
+    body.appendChild(details);
+    if (obsEl) body.appendChild(obsEl);
+    body.appendChild(actions);
+
+    card.appendChild(chk);
+    card.appendChild(body);
+    lista.appendChild(card);
+  });
+
+  atualizarResumoNeg(cobrancas);
+}
+
+function atualizarResumoNeg(cobrancas) {
+  const box   = document.getElementById('neg-resumo-box');
+  const count = document.getElementById('neg-count');
+  const total = document.getElementById('neg-total');
+  if (!box) return;
+
+  if (negSelecionados.size === 0) {
+    box.classList.add('hidden');
+    return;
+  }
+  box.classList.remove('hidden');
+  if (count) count.textContent = negSelecionados.size;
+
+  const soma = Array.from(negSelecionados).reduce((acc, id) => {
+    const c = (cobrancas || []).find(x => x.id === id);
+    return acc + Number(c?.valorFinal || c?.valor || 0);
+  }, 0);
+  if (total) total.textContent = formatCurrency(soma);
+}
+
+function statusLabel(status) {
+  const MAP = {
+    PENDENTE:       'Pendente',
+    VENCIDO:        'Vencido',
+    EM_NEGOCIACAO:  'Em Negociação',
+    PAGO:           'Pago',
+    CANCELADO:      'Cancelado',
+    ACORDO:         'Acordo',
+  };
+  return MAP[status] || status;
+}
+
+function initNegociacaoButtons() {
+  const btnTodos = document.getElementById('btn-neg-selecionar-todos');
+  const btnAvista = document.getElementById('btn-neg-pagar-avista');
+  const btnParcelar = document.getElementById('btn-neg-parcelar');
+
+  if (btnTodos) {
+    btnTodos.addEventListener('click', () => {
+      const chks = document.querySelectorAll('.neg-chk');
+      const todosChecked = Array.from(chks).every(c => c.checked);
+      chks.forEach(c => {
+        c.checked = !todosChecked;
+        const id = parseInt(c.id.replace('neg-chk-', ''));
+        if (!todosChecked) negSelecionados.add(id);
+        else negSelecionados.delete(id);
+        c.closest('.neg-card')?.classList.toggle('neg-card-selected', !todosChecked);
+      });
+      atualizarResumoNeg(currentCobrancas);
+      btnTodos.textContent = todosChecked ? '☑️ Selecionar Todos' : '☐ Desmarcar Todos';
+    });
+  }
+
+  if (btnAvista) {
+    btnAvista.addEventListener('click', () => {
+      if (!negSelecionados.size) return;
+      showNegociacaoConsolidada('AVISTA');
+    });
+  }
+
+  if (btnParcelar) {
+    btnParcelar.addEventListener('click', () => {
+      if (!negSelecionados.size) return;
+      showNegociacaoConsolidada('PARCELAR');
+    });
+  }
+}
+
+function showNegociacaoConsolidada(modo) {
+  const selecionadas = Array.from(negSelecionados).map(id =>
+    currentCobrancas.find(c => c.id === id)
+  ).filter(Boolean);
+
+  if (!selecionadas.length) return;
+
+  const totalOriginal = selecionadas.reduce((a, c) => a + Number(c.valorOriginal || c.valor), 0);
+  const clienteCpf = currentCliente?.cpfCnpj || '';
+
+  const listaHtml = selecionadas.map(c => {
+    const div = document.createElement('div');
+    div.className = 'neg-modal-item';
+    const icon = document.createTextNode('• ');
+    const desc = document.createTextNode(c.descricao);
+    const val  = document.createTextNode(' — ' + formatCurrency(c.valorOriginal || c.valor));
+    div.appendChild(icon); div.appendChild(desc); div.appendChild(val);
+    return div.outerHTML;
+  }).join('');
+
+  const parcBody = modo === 'PARCELAR' ? `
+    <div class="form-section-title">📋 Parcelamento</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Número de Parcelas *</label>
+        <select id="neg-parc-qtd" onchange="recalcularNeg(${totalOriginal})">
+          <option value="">Selecione...</option>
+          ${[2,3,4,5,6,7,8,9,10,12,15,18,24,36,48,60].map(n =>
+            `<option value="${n}">${n}x</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Valor por Parcela</label>
+        <input type="text" id="neg-parc-calc" readonly style="background:rgba(255,255,255,0.04);cursor:not-allowed">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Forma de Cobrança *</label>
+        <select id="neg-parc-forma" onchange="toggleNegDadosBancarios()">
+          <option value="">Selecione...</option>
+          <option value="BOLETO">🧾 Boleto Bancário</option>
+          <option value="DEBITO_AUTOMATICO">🔄 Débito Automático</option>
+          <option value="CARTAO_CREDITO">💳 Cartão de Crédito</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Data da 1ª Parcela *</label>
+        <input type="date" id="neg-parc-data">
+      </div>
+    </div>
+    <div id="neg-dados-bancarios" class="dados-bancarios-section hidden">
+      <div class="form-section-title">🏦 Dados Bancários</div>
+      <div class="form-group">
+        <label>CPF/CNPJ</label>
+        <input type="text" id="neg-cpf" value="${esc(clienteCpf)}" maxlength="18" oninput="this.value=maskCpfCnpj(this.value)">
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Banco</label><input type="text" id="neg-banco-nome" maxlength="80" placeholder="Ex: Itaú"></div>
+        <div class="form-group"><label>Agência</label><input type="text" id="neg-banco-agencia" maxlength="10"></div>
+      </div>
+      <div class="form-group"><label>Conta</label><input type="text" id="neg-banco-conta" maxlength="20"></div>
+    </div>` : '';
+
+  const body = `
+    <div class="neg-modal-lista-wrap">
+      <div class="form-section-title">📋 Débitos Incluídos (${selecionadas.length})</div>
+      <div class="neg-modal-lista">${listaHtml}</div>
+    </div>
+
+    <div class="parc-resumo" style="margin:1rem 0">
+      <div class="parc-resumo-item">
+        <span class="parc-label">Valor Total Original</span>
+        <span class="parc-value parc-value-destaque">${formatCurrency(totalOriginal)}</span>
+      </div>
+      <div class="parc-resumo-item">
+        <span class="parc-label">Valor Negociado</span>
+        <span class="parc-value parc-value-verde" id="neg-valor-final">${formatCurrency(totalOriginal)}</span>
+      </div>
+    </div>
+
+    <div class="form-section-title">💸 Desconto / Juros</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Desconto (%)</label>
+        <div class="input-suffix-wrap">
+          <input type="number" id="neg-desconto" step="0.1" min="0" max="100" placeholder="0.00"
+            oninput="recalcularNeg(${totalOriginal})">
+          <span class="input-suffix">%</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Juros a.m. (%)</label>
+        <div class="input-suffix-wrap">
+          <input type="number" id="neg-juros" step="0.01" min="0" max="30" placeholder="0.00"
+            oninput="recalcularNeg(${totalOriginal})">
+          <span class="input-suffix">% a.m.</span>
+        </div>
+      </div>
+    </div>
+
+    ${parcBody}
+
+    <div class="form-group">
+      <label>Observações do Acordo</label>
+      <textarea id="neg-obs" rows="2" maxlength="400" placeholder="Condições negociadas, descontos..."></textarea>
+    </div>`;
+
+  const titulo = modo === 'PARCELAR'
+    ? `🗓️ Negociação Consolidada — Parcelamento (${selecionadas.length} débitos)`
+    : `💵 Negociação Consolidada — À Vista (${selecionadas.length} débitos)`;
+
+  openModal(titulo, body, [
+    { label: 'Cancelar', class: 'btn-ghost', onClick: closeModal },
+    { label: '✅ Confirmar Acordo', class: 'btn-primary',
+      onClick: () => salvarNegociacaoConsolidada(selecionadas, modo, totalOriginal) },
+  ]);
+
+  setTimeout(() => {
+    recalcularNeg(totalOriginal);
+    if (modo === 'PARCELAR') toggleNegDadosBancarios();
+  }, 60);
+}
+
+function recalcularNeg(totalOriginal) {
+  const descPct  = parseFloat(document.getElementById('neg-desconto')?.value) || 0;
+  const jurosMen = parseFloat(document.getElementById('neg-juros')?.value) || 0;
+  const qtd      = parseInt(document.getElementById('neg-parc-qtd')?.value) || 0;
+
+  const descVal = totalOriginal * descPct / 100;
+  let valorFinal = totalOriginal - descVal;
+  if (jurosMen > 0 && qtd > 0) valorFinal = valorFinal * (1 + jurosMen * qtd / 100);
+  valorFinal = Math.round(valorFinal * 100) / 100;
+
+  const labelFinal = document.getElementById('neg-valor-final');
+  if (labelFinal) {
+    labelFinal.textContent = formatCurrency(valorFinal);
+    labelFinal.style.color = valorFinal < totalOriginal ? '#69f0ae' : valorFinal > totalOriginal ? '#ff5252' : '#e8eaf6';
+  }
+
+  const parcCalc = document.getElementById('neg-parc-calc');
+  if (parcCalc && qtd > 0) parcCalc.value = formatCurrency(valorFinal / qtd);
+  else if (parcCalc) parcCalc.value = '—';
+}
+
+function toggleNegDadosBancarios() {
+  const forma = document.getElementById('neg-parc-forma')?.value;
+  document.getElementById('neg-dados-bancarios')?.classList.toggle('hidden', forma !== 'DEBITO_AUTOMATICO');
+}
+
+async function salvarNegociacaoConsolidada(selecionadas, modo, totalOriginal) {
+  const descPct  = parseFloat(document.getElementById('neg-desconto')?.value) || 0;
+  const jurosMen = parseFloat(document.getElementById('neg-juros')?.value) || 0;
+  const obs      = document.getElementById('neg-obs')?.value.trim() || null;
+
+  let qtd = 1, forma = 'BOLETO', dataFirst = null;
+
+  if (modo === 'PARCELAR') {
+    qtd = parseInt(document.getElementById('neg-parc-qtd')?.value);
+    forma = document.getElementById('neg-parc-forma')?.value;
+    dataFirst = document.getElementById('neg-parc-data')?.value;
+    if (!qtd || qtd < 2) { toast('❌ Selecione o número de parcelas', 'error'); return; }
+    if (!forma) { toast('❌ Selecione a forma de cobrança', 'error'); return; }
+    if (!dataFirst) { toast('❌ Informe a data da 1ª parcela', 'error'); return; }
+  }
+
+  const descVal  = totalOriginal * descPct / 100;
+  let valorFinal = totalOriginal - descVal;
+  if (jurosMen > 0 && qtd > 1) valorFinal = valorFinal * (1 + jurosMen * qtd / 100);
+  valorFinal = Math.round(valorFinal * 100) / 100;
+
+  // Distribui o valor final proporcionalmente entre os débitos
+  const totalBruto = selecionadas.reduce((a, c) => a + Number(c.valorOriginal || c.valor), 0);
+  const codigo = `CONSOL-${currentCliente.id}-${Date.now().toString(36).toUpperCase()}`;
+
+  const cpfCob     = document.getElementById('neg-cpf')?.value.trim() || currentCliente?.cpfCnpj || null;
+  const bancoNome  = document.getElementById('neg-banco-nome')?.value.trim() || null;
+  const bancoAg    = document.getElementById('neg-banco-agencia')?.value.trim() || null;
+  const bancoConta = document.getElementById('neg-banco-conta')?.value.trim() || null;
+
+  try {
+    for (const cob of selecionadas) {
+      const proporcao = totalBruto > 0 ? Number(cob.valorOriginal || cob.valor) / totalBruto : 1 / selecionadas.length;
+      const valCobFinal = Math.round(valorFinal * proporcao * 100) / 100;
+      const valParc     = modo === 'PARCELAR' ? Math.round(valCobFinal / qtd * 100) / 100 : null;
+
+      const cobAtual = await API.buscarCobranca(cob.id);
+      const merged = {
+        ...cobAtual,
+        status:             'EM_NEGOCIACAO',
+        valor:              valCobFinal,
+        valorFinal:         valCobFinal,
+        descontoPercentual: descPct > 0 ? descPct : null,
+        descontoValor:      descPct > 0 ? Math.round(Number(cob.valorOriginal||cob.valor) * descPct / 100 * 100) / 100 : null,
+        taxaJurosMensal:    jurosMen > 0 ? jurosMen : null,
+        parcelado:          modo === 'PARCELAR',
+        numeroParcelas:     modo === 'PARCELAR' ? qtd : null,
+        parcelaAtual:       modo === 'PARCELAR' ? 1 : null,
+        valorParcela:       valParc,
+        formaParcelamento:  modo === 'PARCELAR' ? forma : null,
+        formaPagamento:     modo === 'AVISTA' ? forma : cobAtual.formaPagamento,
+        dataPrimeiraParcela: dataFirst || null,
+        codigoParcelamento: codigo,
+        cpfCobranca:        cpfCob,
+        bancoNome, bancoAgencia: bancoAg, bancoConta,
+        observacoes:        obs,
+        cliente: { id: currentCliente.id },
+      };
+      delete merged.cliente?.cobrancas;
+      delete merged.cliente?.ocorrencias;
+
+      await API.atualizarCobranca(cob.id, merged);
+    }
+
+    // Ocorrência automática para cada débito do acordo consolidado
+    const ids = selecionadas.map(c => c.id);
+    await registrarOcorrenciaAcordo(ids, { atendente: localStorage.getItem('intelicob_user') || 'Operador' });
+    toast(`✅ Acordo consolidado para ${selecionadas.length} débito(s)! ${ids.length} ocorrência(s) registrada(s).`, 'success', 5000);
+    closeModal();
+    negSelecionados.clear();
+    currentCobrancas = await API.cobrancasPorCliente(currentCliente.id);
+    currentOcorrencias = await API.ocorrenciasPorCliente(currentCliente.id);
+    renderNegociacao(currentCobrancas);
+    renderCobrancasCliente(currentCobrancas);
+    renderAcordos(currentCobrancas);
+    renderResumo(currentCobrancas, currentOcorrencias, currentCliente);
+  } catch (err) {
+    toast(`❌ ${err.message}`, 'error');
+  }
+}
+
+
+// ============================================================
+//  ACORDOS FECHADOS — Aba "📄 Acordos"
+// ============================================================
+
+function renderAcordos(cobrancas) {
+  const el = document.getElementById('acordos-list');
+  if (!el) return;
+
+  // Filtra cobranças que têm acordo (EM_NEGOCIACAO + tem codigoParcelamento ou valorFinal)
+  const acordos = (cobrancas || []).filter(c =>
+    c.status === 'EM_NEGOCIACAO' || c.status === 'ACORDO'
+  ).filter(c => c.codigoParcelamento || c.valorFinal);
+
+  if (!acordos.length) {
+    el.innerHTML = '<p class="empty-state">📭 Nenhum acordo fechado ainda. Use a aba Negociação para criar um.</p>';
+    return;
+  }
+
+  // Agrupa por codigoParcelamento (acordos consolidados aparecem como um só)
+  const grupos = {};
+  acordos.forEach(c => {
+    const key = c.codigoParcelamento || `IND-${c.id}`;
+    if (!grupos[key]) grupos[key] = { codigo: key, cobrancas: [], total: 0 };
+    grupos[key].cobrancas.push(c);
+    grupos[key].total += Number(c.valorFinal || c.valor);
+  });
+
+  el.innerHTML = '';
+  Object.values(grupos).forEach(grupo => {
+    const primeira = grupo.cobrancas[0];
+    const isConsolidado = grupo.cobrancas.length > 1;
+    const isParcelado = primeira.parcelado && primeira.numeroParcelas;
+
+    const card = document.createElement('div');
+    card.className = 'acordo-card';
+
+    // Header do card
+    const header = document.createElement('div');
+    header.className = 'acordo-card-header';
+
+    const left = document.createElement('div');
+    left.className = 'acordo-header-left';
+
+    const titulo = document.createElement('div');
+    titulo.className = 'acordo-card-titulo';
+    const icon = isConsolidado ? '📑' : '📄';
+    const tipoTxt = document.createTextNode(`${icon} ${isConsolidado ? 'Acordo Consolidado' : 'Acordo Individual'}`);
+    titulo.appendChild(tipoTxt);
+    left.appendChild(titulo);
+
+    const codigo = document.createElement('div');
+    codigo.className = 'acordo-card-codigo';
+    codigo.textContent = `Cód: ${grupo.codigo}`;
+    left.appendChild(codigo);
+
+    // Badge de parcelamento
+    if (isParcelado) {
+      const parcBadge = document.createElement('div');
+      parcBadge.className = 'acordo-badge-parc';
+      parcBadge.textContent = `🗓️ ${primeira.parcelaAtual || 1}/${primeira.numeroParcelas}x de ${formatCurrency(primeira.valorParcela)}`;
+      left.appendChild(parcBadge);
+    }
+
+    header.appendChild(left);
+
+    // Status + valor
+    const right = document.createElement('div');
+    right.className = 'acordo-header-right';
+
+    const sInfo = statusCobrancaInfo(primeira.status);
+    const badge = document.createElement('span');
+    badge.className = 'status-badge';
+    badge.style.cssText = `background:${sInfo.color}22;border:1px solid ${sInfo.color}44;color:${sInfo.color};`;
+    badge.textContent = `${sInfo.icon} ${sInfo.label}`;
+    right.appendChild(badge);
+
+    const valor = document.createElement('div');
+    valor.className = 'acordo-card-valor';
+    valor.textContent = formatCurrency(grupo.total);
+    right.appendChild(valor);
+
+    header.appendChild(right);
+    card.appendChild(header);
+
+    // Detalhes
+    const details = document.createElement('div');
+    details.className = 'acordo-card-details';
+
+    const detItems = [];
+    detItems.push({ icon: '💰', label: 'Valor negociado', value: formatCurrency(grupo.total) });
+    if (primeira.descontoPercentual) {
+      detItems.push({ icon: '🏷️', label: 'Desconto', value: `${primeira.descontoPercentual}% (−${formatCurrency(primeira.descontoValor)})` });
+    }
+    if (primeira.taxaJurosMensal) {
+      detItems.push({ icon: '📈', label: 'Juros', value: `${primeira.taxaJurosMensal}% a.m.` });
+    }
+    if (primeira.campanha) {
+      detItems.push({ icon: '🎯', label: 'Campanha', value: primeira.campanha });
+    }
+    const venc = primeira.dataPrimeiraParcela || primeira.dataVencimento;
+    detItems.push({ icon: '📅', label: '1º Vencimento', value: formatDate(venc) });
+    const forma = primeira.formaParcelamento || primeira.formaPagamento;
+    if (forma) {
+      const fInfo = formaPagamentoInfo(forma);
+      detItems.push({ icon: fInfo.icon, label: 'Forma', value: fInfo.label });
+    }
+
+    detItems.forEach(d => {
+      const item = document.createElement('div');
+      item.className = 'acordo-detail-item';
+      const label = document.createElement('span');
+      label.className = 'acordo-detail-label';
+      label.textContent = `${d.icon} ${d.label}`;
+      const val = document.createElement('span');
+      val.className = 'acordo-detail-value';
+      val.textContent = d.value;
+      item.appendChild(label);
+      item.appendChild(val);
+      details.appendChild(item);
+    });
+    card.appendChild(details);
+
+    // Lista de débitos incluídos (só se consolidado)
+    if (isConsolidado) {
+      const listaWrap = document.createElement('div');
+      listaWrap.className = 'acordo-debitos-lista';
+      const listaTitle = document.createElement('p');
+      listaTitle.className = 'acordo-debitos-title';
+      listaTitle.textContent = `📋 ${grupo.cobrancas.length} débitos incluídos:`;
+      listaWrap.appendChild(listaTitle);
+
+      grupo.cobrancas.forEach(c => {
+        const item = document.createElement('div');
+        item.className = 'acordo-debito-item';
+        item.textContent = `• ${c.descricao} — ${formatCurrency(c.valorFinal || c.valor)}`;
+        listaWrap.appendChild(item);
+      });
+      card.appendChild(listaWrap);
+    }
+
+    // Observações
+    if (primeira.observacoes) {
+      const obs = document.createElement('div');
+      obs.className = 'acordo-card-obs';
+      obs.textContent = `📝 ${primeira.observacoes}`;
+      card.appendChild(obs);
+    }
+
+    // Ações: gerar boleto + copiar linha digitável + enviar WhatsApp
+    const actions = document.createElement('div');
+    actions.className = 'acordo-card-actions';
+
+    const btnBoleto = document.createElement('button');
+    btnBoleto.className = 'btn-primary btn-sm';
+    btnBoleto.textContent = '🧾 Gerar Boleto';
+    btnBoleto.addEventListener('click', () => baixarBoleto(grupo));
+    actions.appendChild(btnBoleto);
+
+    if (currentCliente?.whatsapp || currentCliente?.telefone) {
+      const btnWpp = document.createElement('button');
+      btnWpp.className = 'btn-ghost btn-sm';
+      btnWpp.textContent = '💬 Enviar via WhatsApp';
+      btnWpp.addEventListener('click', () => enviarAcordoWhatsApp(grupo));
+      actions.appendChild(btnWpp);
+    }
+
+    const btnCopiar = document.createElement('button');
+    btnCopiar.className = 'btn-ghost btn-sm';
+    btnCopiar.textContent = '📋 Copiar Resumo';
+    btnCopiar.addEventListener('click', () => copiarResumoAcordo(grupo));
+    actions.appendChild(btnCopiar);
+
+    card.appendChild(actions);
+    el.appendChild(card);
+  });
+}
+
+async function baixarBoleto(grupo) {
+  try {
+    if (grupo.cobrancas.length === 1) {
+      // Boleto individual
+      toast('🧾 Gerando boleto...', 'info', 2000);
+      await API.gerarBoleto(grupo.cobrancas[0].id);
+      toast('✅ Boleto gerado! Verifique seus downloads.', 'success', 3000);
+    } else {
+      // Boleto consolidado
+      toast('🧾 Gerando boleto consolidado...', 'info', 2000);
+      await API.gerarBoletoConsolidado(grupo.codigo);
+      toast('✅ Boleto consolidado gerado!', 'success', 3000);
+    }
+  } catch (err) {
+    toast(`❌ ${err.message}`, 'error');
+  }
+}
+
+function copiarResumoAcordo(grupo) {
+  const p = grupo.cobrancas[0];
+  let resumo = `*ACORDO FECHADO - INTELICOB*\n`;
+  resumo += `Código: ${grupo.codigo}\n`;
+  resumo += `Valor: ${formatCurrency(grupo.total)}\n`;
+  if (p.parcelado && p.numeroParcelas) {
+    resumo += `Parcelamento: ${p.numeroParcelas}x de ${formatCurrency(p.valorParcela)}\n`;
+    resumo += `1º vencimento: ${formatDate(p.dataPrimeiraParcela)}\n`;
+  } else {
+    resumo += `Pagamento: À vista\n`;
+  }
+  resumo += `Forma: ${formaPagamentoInfo(p.formaParcelamento || p.formaPagamento).label}\n`;
+  if (grupo.cobrancas.length > 1) {
+    resumo += `\nDébitos incluídos:\n`;
+    grupo.cobrancas.forEach(c => { resumo += `• ${c.descricao} — ${formatCurrency(c.valorFinal||c.valor)}\n`; });
+  }
+
+  navigator.clipboard.writeText(resumo.replace(/\\n/g, '\n')).then(() => {
+    toast('📋 Resumo copiado para a área de transferência!', 'success');
+  }).catch(() => {
+    toast('❌ Não foi possível copiar', 'error');
+  });
+}
+
+function enviarAcordoWhatsApp(grupo) {
+  const p = grupo.cobrancas[0];
+  const tel = (currentCliente?.whatsapp || currentCliente?.telefone || '').replace(/\D/g, '');
+  if (!tel) { toast('❌ Cliente sem telefone', 'error'); return; }
+
+  let msg = `*ACORDO FECHADO - INTELICOB*%0A%0A`;
+  msg += `Código: ${grupo.codigo}%0A`;
+  msg += `Valor: ${formatCurrency(grupo.total)}%0A`;
+  if (p.parcelado && p.numeroParcelas) {
+    msg += `Parcelamento: ${p.numeroParcelas}x de ${formatCurrency(p.valorParcela)}%0A`;
+    msg += `1º vencimento: ${formatDate(p.dataPrimeiraParcela)}%0A`;
+  } else {
+    msg += `Pagamento: À vista%0A`;
+  }
+  msg += `Forma: ${formaPagamentoInfo(p.formaParcelamento || p.formaPagamento).label}%0A%0A`;
+  if (grupo.cobrancas.length > 1) {
+    msg += `*Débitos incluídos:*%0A`;
+    grupo.cobrancas.forEach(c => {
+      msg += `• ${c.descricao} — ${formatCurrency(c.valorFinal||c.valor)}%0A`;
+    });
+  }
+  msg += `%0A_Gere seu boleto pelo link: ${window.location.origin}_`;
+
+  window.open(`https://wa.me/55${tel}?text=${msg}`, '_blank');
+}
+
+// ============================================================
+//  OCORRÊNCIA AUTOMÁTICA DE ACORDO
+// ============================================================
+async function registrarOcorrenciaAcordo(cobrancaIds, dados) {
+  for (const id of cobrancaIds) {
+    try {
+      await API.registrarAcordo(id, dados);
+    } catch (err) {
+      console.warn(`Falha ao registrar ocorrência para cobrança ${id}:`, err.message);
+    }
+  }
+}
 
 // ============================================================
 //  OCORRÊNCIAS

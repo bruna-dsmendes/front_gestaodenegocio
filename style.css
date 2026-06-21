@@ -1160,3 +1160,166 @@ body {
   font-size: .75rem; color: rgba(232,234,246,0.38);
   margin-top: .25rem; display: block;
 }
+
+/* ============================================================
+   ABA NEGOCIAÇÃO CONSOLIDADA — Intelicob v3.4
+   ============================================================ */
+
+.neg-header {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap;
+}
+.neg-subtitle {
+  font-size: .82rem; color: rgba(232,234,246,0.5); margin: .2rem 0 0;
+}
+
+/* Resumo da seleção */
+.neg-selecao-resumo {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .8rem;
+  background: rgba(0,212,255,0.06);
+  border: 1px solid rgba(0,212,255,0.2);
+  border-radius: .7rem; padding: .8rem 1.1rem;
+  margin-bottom: 1rem;
+  animation: fadeIn .2s ease;
+}
+.neg-selecao-resumo.hidden { display: none; }
+.neg-resumo-item { display: flex; flex-direction: column; gap: .1rem; min-width: 100px; }
+.neg-resumo-label { font-size: .72rem; color: rgba(232,234,246,0.45); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+.neg-resumo-val { font-size: 1.05rem; font-weight: 700; color: #e8eaf6; }
+.neg-total-val { color: #00d4ff; }
+.neg-resumo-actions { flex-direction: row !important; gap: .5rem; align-items: center; margin-left: auto; }
+
+.btn-purple {
+  background: rgba(124,77,255,0.3) !important;
+  border-color: rgba(124,77,255,0.5) !important;
+}
+.btn-purple:hover { background: rgba(124,77,255,0.45) !important; }
+
+/* Cards da lista */
+.neg-lista { display: flex; flex-direction: column; gap: .6rem; }
+
+.neg-card {
+  display: flex; align-items: flex-start; gap: .8rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: .6rem; padding: .8rem 1rem;
+  transition: background .15s, border-color .15s;
+  cursor: pointer;
+}
+.neg-card:hover { background: rgba(255,255,255,0.05); }
+.neg-card-selected {
+  background: rgba(0,212,255,0.06) !important;
+  border-color: rgba(0,212,255,0.25) !important;
+}
+
+.neg-chk {
+  width: 1.1rem; height: 1.1rem; cursor: pointer;
+  accent-color: #00d4ff; flex-shrink: 0; margin-top: .15rem;
+}
+
+.neg-card-body { flex: 1; display: flex; flex-direction: column; gap: .35rem; }
+.neg-card-titulo { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.neg-card-desc { font-size: .9rem; font-weight: 600; color: #e8eaf6; cursor: pointer; }
+.neg-badges { display: flex; gap: .35rem; flex-wrap: wrap; }
+.neg-badge-parc {
+  font-size: .72rem; background: rgba(124,77,255,0.15);
+  border: 1px solid rgba(124,77,255,0.3); color: #b39ddb;
+  padding: .1rem .5rem; border-radius: 999px;
+}
+.neg-badge-desc {
+  font-size: .72rem; background: rgba(105,240,174,0.1);
+  border: 1px solid rgba(105,240,174,0.25); color: #69f0ae;
+  padding: .1rem .5rem; border-radius: 999px;
+}
+
+.neg-card-details {
+  display: flex; flex-wrap: wrap; gap: .5rem;
+  font-size: .8rem; color: rgba(232,234,246,0.55);
+}
+.neg-card-obs {
+  font-size: .78rem; color: rgba(232,234,246,0.4);
+  font-style: italic;
+}
+.neg-card-actions { display: flex; gap: .5rem; margin-top: .3rem; }
+
+/* Modal negociação consolidada */
+.neg-modal-lista-wrap {
+  margin-bottom: .8rem;
+}
+.neg-modal-lista {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: .5rem; padding: .7rem 1rem;
+  max-height: 160px; overflow-y: auto;
+  display: flex; flex-direction: column; gap: .3rem;
+}
+.neg-modal-item {
+  font-size: .82rem; color: rgba(232,234,246,0.7);
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  padding-bottom: .25rem;
+}
+.neg-modal-item:last-child { border-bottom: none; }
+
+/* ============================================================
+   ABA ACORDOS — Intelicob v3.5
+   ============================================================ */
+
+.acordos-list { display: flex; flex-direction: column; gap: .8rem; }
+
+.acordo-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: .7rem; padding: 1rem 1.2rem;
+  display: flex; flex-direction: column; gap: .7rem;
+}
+.acordo-card:hover { border-color: rgba(0,212,255,0.15); }
+
+.acordo-card-header {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: 1rem; flex-wrap: wrap;
+}
+.acordo-header-left { display: flex; flex-direction: column; gap: .25rem; }
+.acordo-header-right { display: flex; flex-direction: column; gap: .3rem; align-items: flex-end; }
+.acordo-card-titulo { font-size: .92rem; font-weight: 700; color: #e8eaf6; }
+.acordo-card-codigo { font-size: .78rem; color: rgba(232,234,246,0.45); font-family: monospace; }
+.acordo-badge-parc {
+  font-size: .74rem; background: rgba(124,77,255,0.12);
+  border: 1px solid rgba(124,77,255,0.25); color: #b39ddb;
+  padding: .15rem .6rem; border-radius: 999px; width: fit-content;
+}
+.acordo-card-valor { font-size: 1.15rem; font-weight: 800; color: #00d4ff; }
+
+.acordo-card-details {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: .5rem;
+}
+.acordo-detail-item {
+  display: flex; flex-direction: column; gap: .1rem;
+  background: rgba(255,255,255,0.02);
+  border-radius: .4rem; padding: .4rem .6rem;
+}
+.acordo-detail-label { font-size: .72rem; color: rgba(232,234,246,0.4); }
+.acordo-detail-value { font-size: .82rem; color: #e8eaf6; font-weight: 600; }
+
+.acordo-debitos-lista {
+  background: rgba(255,255,255,0.02);
+  border-radius: .4rem; padding: .6rem .8rem;
+}
+.acordo-debitos-title {
+  font-size: .8rem; font-weight: 600; color: #e8eaf6;
+  margin-bottom: .4rem;
+}
+.acordo-debito-item {
+  font-size: .78rem; color: rgba(232,234,246,0.55);
+  padding: .15rem 0;
+}
+
+.acordo-card-obs {
+  font-size: .78rem; color: rgba(232,234,246,0.4);
+  font-style: italic; padding: .3rem 0;
+}
+
+.acordo-card-actions {
+  display: flex; gap: .5rem; flex-wrap: wrap;
+  padding-top: .3rem; border-top: 1px solid rgba(255,255,255,0.05);
+}

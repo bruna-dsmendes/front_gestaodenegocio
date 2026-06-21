@@ -18,6 +18,9 @@ const CONFIG = {
     COBRANCA_FILTRO_CLIENTE:'/cobrancas/filtro/cliente',
     COBRANCA_FILTRO_VALOR: '/cobrancas/filtro/valor',
     COBRANCA_POR_CLIENTE:  (id) => `/cobrancas/cliente/${id}`,
+    BOLETO_POR_COBRANCA:   (id) => `/cobrancas/${id}/boleto`,
+    BOLETO_CONSOLIDADO:    (cod) => `/cobrancas/consolidado/${cod}/boleto`,
+    REGISTRAR_ACORDO:      (id) => `/cobrancas/${id}/registrar-acordo`,
     DASHBOARD:             '/cobrancas/dashboard',
     // Ocorrências
     OCORRENCIA_CRIAR:      (clienteId) => `/ocorrencias/cliente/${clienteId}`,

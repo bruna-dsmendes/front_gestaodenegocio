@@ -91,6 +91,8 @@
         <div class="inner-tabs" id="inner-tabs">
           <button class="inner-tab active" data-inner="resumo">📋 Resumo</button>
           <button class="inner-tab" data-inner="cobrancas">💸 Cobranças</button>
+          <button class="inner-tab" data-inner="negociacao">🤝 Negociação</button>
+          <button class="inner-tab" data-inner="acordos">📄 Acordos</button>
           <button class="inner-tab" data-inner="ocorrencias">📞 Ocorrências</button>
           <button class="inner-tab" data-inner="editar">✏️ Editar</button>
         </div>
@@ -142,6 +144,15 @@
             <div id="cliente-cobrancas-list" class="cobranca-list"></div>
           </div>
 
+          <!-- ABA: ACORDOS FECHADOS -->
+          <div class="inner-view" id="inner-acordos">
+            <div class="inner-view-header">
+              <p class="section-title">📄 Acordos Fechados & Boletos</p>
+              <button class="btn-primary btn-sm hidden" id="btn-gerar-todos-boletos">🧾 Gerar Todos os Boletos</button>
+            </div>
+            <div id="acordos-list" class="acordos-list"></div>
+          </div>
+
           <!-- ABA: OCORRÊNCIAS -->
           <div class="inner-view" id="inner-ocorrencias">
             <div class="section-card oc-form-card">
@@ -189,6 +200,36 @@
               <p class="section-title">📋 Histórico de Atendimento</p>
               <div id="cliente-ocorrencias-list" class="oc-list"></div>
             </div>
+          </div>
+
+          <!-- ABA: NEGOCIAÇÃO CONSOLIDADA -->
+          <div class="inner-view" id="inner-negociacao">
+            <div class="neg-header">
+              <div>
+                <p class="section-title">🤝 Negociação de Débitos</p>
+                <p class="neg-subtitle" id="neg-subtitle">Selecione um ou mais débitos para negociar em conjunto</p>
+              </div>
+              <button class="btn-primary btn-sm" id="btn-neg-selecionar-todos">☑️ Selecionar Todos</button>
+            </div>
+
+            <!-- Resumo da seleção -->
+            <div class="neg-selecao-resumo hidden" id="neg-resumo-box">
+              <div class="neg-resumo-item">
+                <span class="neg-resumo-label">Débitos Selecionados</span>
+                <span class="neg-resumo-val" id="neg-count">0</span>
+              </div>
+              <div class="neg-resumo-item">
+                <span class="neg-resumo-label">Valor Total</span>
+                <span class="neg-resumo-val neg-total-val" id="neg-total">R$ 0,00</span>
+              </div>
+              <div class="neg-resumo-item neg-resumo-actions">
+                <button class="btn-primary btn-sm" id="btn-neg-pagar-avista">💵 À Vista</button>
+                <button class="btn-primary btn-sm btn-purple" id="btn-neg-parcelar">🗓️ Parcelar</button>
+              </div>
+            </div>
+
+            <!-- Lista de débitos -->
+            <div id="neg-lista" class="neg-lista"></div>
           </div>
 
           <!-- ABA: EDITAR -->
