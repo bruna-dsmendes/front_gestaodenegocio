@@ -1,72 +1,66 @@
-/* ============================================================
-   CONFIG.JS — CrediControl v3.0 | Configurações centrais
-   API: Spring Boot — Gestão de Débitos e Recuperação de Crédito
-   ============================================================ */
-
 const CONFIG = {
   API_BASE_URL: 'http://localhost:8080/api',
 
   ENDPOINTS: {
-    CLIENTES:              '/clientes',
-    CLIENTE_BY_ID:         (id) => `/clientes/${id}`,
-    COBRANCAS:             '/cobrancas',
-    COBRANCA_BY_ID:        (id) => `/cobrancas/${id}`,
-    COBRANCA_FILTRO_STATUS:'/cobrancas/filtro/status',
-    COBRANCA_FILTRO_CLIENTE:'/cobrancas/filtro/cliente',
+    CLIENTES: '/clientes',
+    CLIENTE_BY_ID: (id) => `/clientes/${id}`,
+    COBRANCAS: '/cobrancas',
+    COBRANCA_BY_ID: (id) => `/cobrancas/${id}`,
+    COBRANCA_FILTRO_STATUS: '/cobrancas/filtro/status',
+    COBRANCA_FILTRO_CLIENTE: '/cobrancas/filtro/cliente',
     COBRANCA_FILTRO_VALOR: '/cobrancas/filtro/valor',
-    COBRANCA_POR_CLIENTE:  (id) => `/cobrancas/cliente/${id}`,
-    DASHBOARD:             '/cobrancas/dashboard',
-    OCORRENCIA_CRIAR:      (clienteId) => `/ocorrencias/cliente/${clienteId}`,
-    OCORRENCIA_LISTAR:     (clienteId) => `/ocorrencias/cliente/${clienteId}`,
-    OCORRENCIAS_RECENTES:  '/ocorrencias/recentes',
+    COBRANCA_POR_CLIENTE: (id) => `/cobrancas/cliente/${id}`,
+    DASHBOARD: '/cobrancas/dashboard',
+    OCORRENCIA_CRIAR: (clienteId) => `/ocorrencias/cliente/${clienteId}`,
+    OCORRENCIA_LISTAR: (clienteId) => `/ocorrencias/cliente/${clienteId}`,
+    OCORRENCIAS_RECENTES: '/ocorrencias/recentes',
   },
 
   STATUS_CLIENTE: [
-    { value: 'INADIMPLENTE', label: 'Inadimplente',  color: '#ff5252', icon: '⛔' },
-    { value: 'EM_ACORDO',    label: 'Em Acordo',     color: '#ffc107', icon: '🤝' },
-    { value: 'REGULARIZADO', label: 'Regularizado',  color: '#00e676', icon: '✅' },
+    { value: 'INADIMPLENTE', label: 'Inadimplente', color: '#ff5252', icon: '⛔' },
+    { value: 'EM_ACORDO', label: 'Em Acordo', color: '#ffc107', icon: '🤝' },
+    { value: 'REGULARIZADO', label: 'Regularizado', color: '#00e676', icon: '✅' },
   ],
 
   STATUS_COBRANCA: [
-    { value: 'PENDENTE',         label: 'Pendente',          color: '#ff5252', icon: '📋' },
-    { value: 'NOTIFICADO',       label: 'Notificado',        color: '#ff9800', icon: '📨' },
-    { value: 'EM_NEGOCIACAO',    label: 'Em Negociação',     color: '#ffc107', icon: '💬' },
-    { value: 'PROPOSTA_ENVIADA', label: 'Proposta Enviada',  color: '#2196f3', icon: '📤' },
-    { value: 'PAGO',             label: 'Pago',              color: '#00e676', icon: '💰' },
-    { value: 'JUDICIAL',         label: 'Judicial',          color: '#9e9e9e', icon: '⚖️' },
+    { value: 'PENDENTE', label: 'Pendente', color: '#ff5252', icon: '📋' },
+    { value: 'NOTIFICADO', label: 'Notificado', color: '#ff9800', icon: '📨' },
+    { value: 'EM_NEGOCIACAO', label: 'Em Negociação', color: '#ffc107', icon: '💬' },
+    { value: 'PROPOSTA_ENVIADA', label: 'Proposta Enviada', color: '#2196f3', icon: '📤' },
+    { value: 'PAGO', label: 'Pago', color: '#00e676', icon: '💰' },
+    { value: 'JUDICIAL', label: 'Judicial', color: '#9e9e9e', icon: '⚖️' },
   ],
 
-  // ─── NOVOS ENUMS v3.0 ───
   TIPO_OCORRENCIA: [
-    { value: 'LIGACAO',  label: 'Ligação',     icon: '📞' },
-    { value: 'WHATSAPP', label: 'WhatsApp',    icon: '💬' },
-    { value: 'SMS',      label: 'SMS',         icon: '📱' },
-    { value: 'EMAIL',    label: 'E-mail',      icon: '✉️' },
-    { value: 'VISITA',   label: 'Visita',      icon: '🚶' },
-    { value: 'CARTA',    label: 'Carta',       icon: '✉️' },
-    { value: 'SISTEMA',  label: 'Sistema',     icon: '🤖' },
+    { value: 'LIGACAO', label: 'Ligação', icon: '📞' },
+    { value: 'WHATSAPP', label: 'WhatsApp', icon: '💬' },
+    { value: 'SMS', label: 'SMS', icon: '📱' },
+    { value: 'EMAIL', label: 'E-mail', icon: '✉️' },
+    { value: 'VISITA', label: 'Visita', icon: '🚶' },
+    { value: 'CARTA', label: 'Carta', icon: '✉️' },
+    { value: 'SISTEMA', label: 'Sistema', icon: '🤖' },
   ],
 
   RESULTADO_OCORRENCIA: [
-    { value: 'CONTATO_EFETUADO',   label: 'Contato Efetuado',     icon: '✅' },
-    { value: 'NAO_ATENDEU',        label: 'Não Atendeu',          icon: '📵' },
-    { value: 'CAIXA_POSTAL',       label: 'Caixa Postal',         icon: '📨' },
-    { value: 'NUMERO_INVALIDO',    label: 'Número Inválido',      icon: '❌' },
-    { value: 'CLIENTE_RECUSOU',    label: 'Cliente Recusou',      icon: '😡' },
-    { value: 'PROMESSA_PAGAMENTO', label: 'Promessa de Pagamento',icon: '🤞' },
-    { value: 'ACORDO_FECHADO',     label: 'Acordo Fechado',       icon: '🤝' },
-    { value: 'CLIENTE_RECLAMOU',   label: 'Cliente Reclamou',     icon: '⚠️' },
-    { value: 'SEM_CONTATO',        label: 'Sem Contato',          icon: '❓' },
+    { value: 'CONTATO_EFETUADO', label: 'Contato Efetuado', icon: '✅' },
+    { value: 'NAO_ATENDEU', label: 'Não Atendeu', icon: '📵' },
+    { value: 'CAIXA_POSTAL', label: 'Caixa Postal', icon: '📨' },
+    { value: 'NUMERO_INVALIDO', label: 'Número Inválido', icon: '❌' },
+    { value: 'CLIENTE_RECUSOU', label: 'Cliente Recusou', icon: '😡' },
+    { value: 'PROMESSA_PAGAMENTO', label: 'Promessa de Pagamento', icon: '🤞' },
+    { value: 'ACORDO_FECHADO', label: 'Acordo Fechado', icon: '🤝' },
+    { value: 'CLIENTE_RECLAMOU', label: 'Cliente Reclamou', icon: '⚠️' },
+    { value: 'SEM_CONTATO', label: 'Sem Contato', icon: '❓' },
   ],
 
   FORMA_PAGAMENTO: [
-    { value: 'PIX',             label: 'PIX',                icon: '⚡' },
-    { value: 'BOLETO',          label: 'Boleto',             icon: '🧾' },
-    { value: 'CARTAO_CREDITO',  label: 'Cartão de Crédito',  icon: '💳' },
-    { value: 'CARTAO_DEBITO',   label: 'Cartão de Débito',   icon: '💳' },
-    { value: 'TRANSFERENCIA',   label: 'Transferência',      icon: '🏦' },
-    { value: 'DINHEIRO',        label: 'Dinheiro',           icon: '💵' },
-    { value: 'DEBITO_AUTOMATICO',label: 'Débito Automático', icon: '🔄' },
+    { value: 'PIX', label: 'PIX', icon: '⚡' },
+    { value: 'BOLETO', label: 'Boleto', icon: '🧾' },
+    { value: 'CARTAO_CREDITO', label: 'Cartão de Crédito', icon: '💳' },
+    { value: 'CARTAO_DEBITO', label: 'Cartão de Débito', icon: '💳' },
+    { value: 'TRANSFERENCIA', label: 'Transferência', icon: '🏦' },
+    { value: 'DINHEIRO', label: 'Dinheiro', icon: '💵' },
+    { value: 'DEBITO_AUTOMATICO', label: 'Débito Automático', icon: '🔄' },
   ],
 
   CATEGORIAS_DEBITO: [
@@ -86,42 +80,42 @@ const CONFIG = {
     'Outros',
   ],
 
-  UF_LIST: ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'],
+  UF_LIST: ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'],
 
   THEME: {
-    bg:'#0a0e1a', surface:'rgba(20,27,45,0.85)', border:'rgba(255,255,255,0.08)',
-    accent:'#00d4ff', accent2:'#7c4dff', danger:'#ff5252', success:'#00e676',
-    warning:'#ffc107', text:'#e8eaf6', textMuted:'rgba(232,234,246,0.55)',
+    bg: '#0a0e1a', surface: 'rgba(20,27,45,0.85)', border: 'rgba(255,255,255,0.08)',
+    accent: '#00d4ff', accent2: '#7c4dff', danger: '#ff5252', success: '#00e676',
+    warning: '#ffc107', text: '#e8eaf6', textMuted: 'rgba(232,234,246,0.55)',
   },
 
   CURRENCY: 'BRL',
-  LOCALE:   'pt-BR',
+  LOCALE: 'pt-BR',
 };
 
 // ─── Helpers ───
-function statusClienteInfo(v) { return CONFIG.STATUS_CLIENTE.find(s => s.value === v) ?? {label:v,color:'#9e9e9e',icon:'❓'}; }
-function statusCobrancaInfo(v) { return CONFIG.STATUS_COBRANCA.find(s => s.value === v) ?? {label:v,color:'#9e9e9e',icon:'❓'}; }
-function tipoOcorrenciaInfo(v) { return CONFIG.TIPO_OCORRENCIA.find(s => s.value === v) ?? {label:v,icon:'❓'}; }
-function resultadoOcorrenciaInfo(v) { return CONFIG.RESULTADO_OCORRENCIA.find(s => s.value === v) ?? {label:v,icon:'❓'}; }
-function formaPagamentoInfo(v) { return CONFIG.FORMA_PAGAMENTO.find(s => s.value === v) ?? {label:v,icon:'❓'}; }
+function statusClienteInfo(v) { return CONFIG.STATUS_CLIENTE.find(s => s.value === v) ?? { label: v, color: '#9e9e9e', icon: '❓' }; }
+function statusCobrancaInfo(v) { return CONFIG.STATUS_COBRANCA.find(s => s.value === v) ?? { label: v, color: '#9e9e9e', icon: '❓' }; }
+function tipoOcorrenciaInfo(v) { return CONFIG.TIPO_OCORRENCIA.find(s => s.value === v) ?? { label: v, icon: '❓' }; }
+function resultadoOcorrenciaInfo(v) { return CONFIG.RESULTADO_OCORRENCIA.find(s => s.value === v) ?? { label: v, icon: '❓' }; }
+function formaPagamentoInfo(v) { return CONFIG.FORMA_PAGAMENTO.find(s => s.value === v) ?? { label: v, icon: '❓' }; }
 
 function formatCurrency(value) {
   const num = Number(value ?? 0);
-  return num.toLocaleString(CONFIG.LOCALE, { style:'currency', currency:CONFIG.CURRENCY, minimumFractionDigits:2 });
+  return num.toLocaleString(CONFIG.LOCALE, { style: 'currency', currency: CONFIG.CURRENCY, minimumFractionDigits: 2 });
 }
 
 function formatDate(iso) {
   if (!iso) return '—';
   const d = new Date(iso);
   if (isNaN(d)) return '—';
-  return d.toLocaleDateString(CONFIG.LOCALE, { day:'2-digit', month:'2-digit', year:'numeric' });
+  return d.toLocaleDateString(CONFIG.LOCALE, { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
 function formatDateTime(iso) {
   if (!iso) return '—';
   const d = new Date(iso);
   if (isNaN(d)) return '—';
-  return d.toLocaleString(CONFIG.LOCALE, { day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit' });
+  return d.toLocaleString(CONFIG.LOCALE, { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
 // ─── Máscara de CPF/CNPJ ───
